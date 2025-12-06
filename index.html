@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AERIS - Minimalist Apparel</title>
+    <!-- Google Fonts: Prompt for Thai support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            color: #1f2937; /* slate-800 */
+            background-color: #ffffff;
+            font-size: 18px; /* Base font size increased */
+        }
+        .page-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .nav-link {
+            position: relative;
+            cursor: pointer;
+            padding-bottom: 6px;
+            color: #4b5563; /* gray-600 */
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 3px;
+            bottom: 0;
+            left: 0;
+            background-color: #1a1a2e;
+            transition: width 0.3s;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+        .nav-link.active {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Product Card Specific Styles */
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 17px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between min-h-screen">
+
+    <!-- NAVIGATION (Scaled Up) -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm py-8 border-b border-gray-100">
+        <div class="max-w-[1600px] mx-auto px-8 flex justify-between items-center">
+            <!-- Logo -->
+            <div class="text-4xl font-bold tracking-widest text-[#1a1a2e] cursor-pointer hover:opacity-80 transition" onclick="showPage('home')">
+                AERIS
+            </div>
+
+            <!-- Menu -->
+            <div class="hidden md:flex space-x-16 font-medium text-lg">
+                <a onclick="showPage('home')" id="nav-home" class="nav-link active">หน้าหลัก</a>
+                <a onclick="showPage('products')" id="nav-products" class="nav-link">สินค้า</a>
+                <a onclick="showPage('about')" id="nav-about" class="nav-link">เกี่ยวกับเรา</a>
+                <a onclick="showPage('contact')" id="nav-contact" class="nav-link">ติดต่อเรา</a>
+            </div>
+
+            <!-- Icons -->
+            <div class="flex items-center space-x-6">
+                <button onclick="showPage('cart')" class="text-gray-600 hover:text-[#1a1a2e] relative transition group">
+                    <!-- Custom Cart Icon matching the image -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="group-hover:scale-105 transition duration-300">
+                        <path d="M19 8H5L4 21H20L19 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 8V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span id="cart-badge" class="absolute -top-1 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full hidden">0</span>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-600">
+                <i data-lucide="menu" class="w-8 h-8"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow">
+
+        <!-- ================= PAGE 1: HOME (Scaled Up) ================= -->
+        <div id="home" class="page-section active">
+            <!-- Hero -->
+            <section class="py-40 text-center px-4 min-h-[80vh] flex flex-col justify-center">
+                <p class="text-gray-400 text-lg tracking-[0.3em] uppercase mb-8">The Art of Simplicity</p>
+                <h1 class="text-7xl md:text-9xl font-medium text-[#1a1a2e] mb-10 leading-tight">
+                    Less is <span class="font-bold border-b-8 border-[#1a1a2e]">MORE</span>
+                </h1>
+                <p class="text-gray-500 max-w-4xl mx-auto font-light leading-loose mb-16 text-2xl">
+                    เราเชื่อในพลังของความเรียบง่าย เสื้อผ้าที่ออกแบบอย่างพิถีพิถันจากวัสดุคุณภาพดีที่สุด<br>
+                    เพื่อให้คุณใช้ชีวิตได้อย่างอิสระและเป็นตัวของตัวเอง
+                </p>
+                <div>
+                    <button onclick="showPage('products')" class="bg-[#1a1a2e] text-white px-12 py-5 text-lg rounded hover:bg-opacity-90 transition shadow-xl transform hover:scale-105 duration-300">
+                        สำรวจคอลเลกชั่น
+                    </button>
+                </div>
+            </section>
+
+            <!-- Features -->
+            <section class="max-w-[1400px] mx-auto px-8 py-32 pb-48">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
+                    <!-- Feature 1 -->
+                    <div class="border border-gray-100 p-12 rounded-2xl hover:shadow-2xl transition duration-300 bg-white text-center group">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-10 group-hover:bg-gray-100 transition">
+                            <i data-lucide="check" class="w-10 h-10 text-gray-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-5 text-[#1a1a2e]">วัสดุพรีเมี่ยม</h3>
+                        <p class="text-gray-500 text-lg font-light leading-relaxed">
+                            คัดสรรผ้าคุณภาพสูงที่ทนทานและเป็นมิตรต่อสิ่งแวดล้อม
+                        </p>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div class="border border-gray-100 p-12 rounded-2xl hover:shadow-2xl transition duration-300 bg-white text-center group">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-10 group-hover:bg-gray-100 transition">
+                            <i data-lucide="clock" class="w-10 h-10 text-gray-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-5 text-[#1a1a2e]">ดีไซน์เหนือกาลเวลา</h3>
+                        <p class="text-gray-500 text-lg font-light leading-relaxed">
+                            เน้นรูปทรงคลาสสิกที่สามารถใส่ได้ในทุกยุคสมัย
+                        </p>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div class="border border-gray-100 p-12 rounded-2xl hover:shadow-2xl transition duration-300 bg-white text-center group">
+                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-10 group-hover:bg-gray-100 transition">
+                            <i data-lucide="leaf" class="w-10 h-10 text-gray-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-5 text-[#1a1a2e]">ผลิตอย่างยั่งยืน</h3>
+                        <p class="text-gray-500 text-lg font-light leading-relaxed">
+                            กระบวนการผลิตที่ใส่ใจและลดผลกระทบต่อโลกของเรา
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================= PAGE 2: PRODUCTS (Scaled Up & Functional) ================= -->
+        <div id="products" class="page-section">
+            <section class="max-w-[1600px] mx-auto px-8 py-24">
+                <div class="text-center mb-24">
+                    <h2 class="text-5xl font-medium text-[#1a1a2e] inline-block border-b-4 border-[#1a1a2e] pb-4">สินค้าทั้งหมด</h2>
+                </div>
+
+                <!-- Product Grid (Scaled Up) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-32">
+                    <!-- Items will use onclick="addToCart(...)" -->
+                    
+                    <!-- Product 1 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/basictee.jpg" alt="T-Shirt" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">เสื้อยืด Basic Tee (ขาว)</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">คอตตอนออร์แกนิก 100% ทรงโอเวอร์ไซส์เล็กน้อย</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">890 บาท</p>
+                            <button onclick="addToCart(1)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 2 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/oxford.jpg" alt="Oxford Shirt" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">เสื้อเชิ้ต Oxford คอตั้ง</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">ดีไซน์คอตั้งแบบเรียบง่าย สำหรับทุกโอกาส</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">1,590 บาท</p>
+                            <button onclick="addToCart(2)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 3 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/Chino.jpg" alt="Chino Pants" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">กางเกง Chino ทรงตรง</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">ผ้าคอตตอนผสมลินิน ระบายอากาศได้ดีเยี่ยม</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">1,290 บาท</p>
+                            <button onclick="addToCart(3)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 4 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/Canvas.jpg" alt="Canvas Bag" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">กระเป๋าผ้า Canvas สีดำ</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">ผ้าแคนวาสหนาพิเศษ พร้อมช่องลับด้านใน</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">690 บาท</p>
+                            <button onclick="addToCart(4)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 5 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/Dress.jpg" alt="Dress" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">เดรสลินินทรงปล่อย</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">เดรสยาวผ้าลินินแท้ สวมใส่สบายในวันพักผ่อน</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">890 บาท</p>
+                            <button onclick="addToCart(5)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 6 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/Cardigan.jpg" alt="Cardigan" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">เสื้อคลุม Cardigan</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">ไหมพรมเนื้อละเอียด อุ่นสบาย ไม่ระคายเคือง</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">890 บาท</p>
+                            <button onclick="addToCart(6)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 7 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/unnamed (2).jpg" alt="Cap" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">หมวกแก๊ป Minimal</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">หมวกผ้าฝ้าย ปักโลโก้เล็กๆ ด้านข้าง</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">890 บาท</p>
+                            <button onclick="addToCart(7)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+
+                    <!-- Product 8 -->
+                    <div class="product-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                        <div class="bg-gray-100 rounded-2xl overflow-hidden mb-6 relative h-[400px] flex items-center justify-center">
+                            <img src="image/Easyday.jpg" alt="Shorts" class="w-full h-full object-cover mix-blend-multiply">
+                        </div>
+                        <div class="text-center px-4 pb-4">
+                            <h3 class="font-bold text-[#1a1a2e] text-2xl mb-2">กางเกงขาสั้น Easy Day</h3>
+                            <p class="text-base text-gray-500 mb-4 h-12 overflow-hidden">กางเกงขาสั้นเอวยืด สำหรับวันสบายๆ</p>
+                            <p class="font-bold text-[#1a1a2e] text-3xl mb-6">890 บาท</p>
+                            <button onclick="addToCart(8)" class="w-full bg-[#1a1a2e] text-white text-lg font-medium py-4 rounded-xl hover:bg-[#2e2e42] transition shadow-md active:scale-95">เพิ่มลงในตะกร้า</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Care Instructions (Scaled Up) -->
+                <div class="bg-[#f9f9f7] rounded-[2.5rem] p-16 md:p-24 flex flex-col md:flex-row items-center gap-20">
+                    <div class="flex-1">
+                        <h3 class="text-4xl font-bold mb-8 text-[#1a1a2e]">การดูแลรักษาผ้า</h3>
+                        <p class="text-gray-600 font-light leading-loose text-xl mb-10">
+                            เพื่อให้เสื้อผ้า AERIS ของคุณอยู่กับคุณไปนานแสนนาน เราแนะนำให้ซักด้วยน้ำอุณหภูมิปกติและตากในที่ร่ม หลีกเลี่ยงการใช้น้ำยาฟอกขาว ผ้าลินินของเรายิ่งซักจะยิ่งนุ่มขึ้นตามกาลเวลา
+                        </p>
+                        <ul class="space-y-5 text-gray-700 text-lg">
+                            <li class="flex items-center gap-4">
+                                <span class="w-3 h-3 bg-[#1a1a2e] rounded-full"></span>
+                                <span>ซักมือหรือซักเครื่องโหมดถนอมผ้า</span>
+                            </li>
+                            <li class="flex items-center gap-4">
+                                <span class="w-3 h-3 bg-[#1a1a2e] rounded-full"></span>
+                                <span>รีดด้วยไฟปานกลางขณะผ้าหมาด</span>
+                            </li>
+                            <li class="flex items-center gap-4">
+                                <span class="w-3 h-3 bg-[#1a1a2e] rounded-full"></span>
+                                <span>หลีกเลี่ยงการอบแห้งความร้อนสูง</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="w-full md:w-1/3 flex justify-center opacity-80">
+                         <!-- Decorative Icon/Graphic for care -->
+                         <i data-lucide="sparkles" class="w-48 h-48 text-gray-200"></i>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================= PAGE 3: ABOUT US (Scaled Up) ================= -->
+        <div id="about" class="page-section">
+            <section class="max-w-5xl mx-auto px-6 py-32 text-center">
+                <h2 class="text-4xl font-medium text-[#1a1a2e] mb-10">เรื่องราวของ AERIS</h2>
+                <p class="text-gray-500 italic text-2xl mb-24 leading-relaxed">"ในโลกที่เต็มไปด้วยเสียงรบกวน เราเลือกที่จะกระซิบ แต่เป็นเสียงกระซิบที่ชัดเจนและหนักแน่น"</p>
+
+                <div class="text-left mb-32">
+                    <h3 class="text-3xl font-bold mb-6 text-[#1a1a2e]">จุดเริ่มต้น: ความเรียบง่ายที่หายไป</h3>
+                    <p class="text-gray-600 leading-loose font-light mb-6 text-xl">
+                        AERIS ก่อตั้งขึ้นในปี 2020 จากความเบื่อหน่ายในวงการ Fast Fashion ที่เน้นปริมาณมากกว่าคุณภาพ เราเริ่มจากห้องเล็กๆ ในกรุงเทพฯ ด้วยจักรเย็บผ้าเพียงตัวเดียว และความมุ่งมั่นที่จะสร้างเสื้อเชิ้ตสีขาวที่สมบูรณ์แบบที่สุด
+                    </p>
+                    <p class="text-gray-600 leading-loose font-light text-xl">
+                        ชื่อ "AERIS" (แอริส) มาจากรากศัพท์ที่สื่อถึง "อากาศ" และ "ความบริสุทธิ์" สะท้อนถึงสไตล์เสื้อผ้าที่เบาสบายและโปร่งโล่งของเรา
+                    </p>
+                </div>
+
+                <!-- Values Box -->
+                <div class="border border-gray-100 rounded-3xl p-12 bg-white mb-32 shadow-sm">
+                    <h3 class="text-3xl font-bold mb-12 text-center text-[#1a1a2e]">คุณค่าที่เรายึดถือ</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                        <div>
+                            <p class="font-medium text-2xl mb-4 text-[#1a1a2e]">Quality First</p>
+                            <p class="text-base text-gray-500 px-4 leading-relaxed">เราใช้เวลากว่า 6 เดือนในการทดสอบผ้า แต่ละชนิดก่อนนำมาผลิตจริง</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-2xl mb-4 text-[#1a1a2e]">Transparent Price</p>
+                            <p class="text-base text-gray-500 px-4 leading-relaxed">เราเปิดเผยโครงสร้างราคาอย่างจริงใจ ไม่มีค่าการตลาดแฝงที่เกินจริง</p>
+                        </div>
+                        <div>
+                            <p class="font-medium text-2xl mb-4 text-[#1a1a2e]">Ethical Made</p>
+                            <p class="text-base text-gray-500 px-4 leading-relaxed">ช่างฝีมือทุกคนได้รับค่าตอบแทนที่เป็นธรรมและมีสวัสดิการที่ดี</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="text-center mb-24">
+                    <h3 class="text-3xl font-bold text-[#1a1a2e]">จากเส้นใย... สู่มือคุณ</h3>
+                </div>
+                
+                <div class="max-w-6xl mx-auto">
+                    <!-- Item 1 -->
+                    <div class="flex flex-col md:flex-row gap-12 md:gap-16 mb-20 relative">
+                        <div class="absolute left-[19px] top-12 bottom-[-80px] w-[3px] bg-gray-300 hidden md:block"></div>
+                        <div class="flex-none flex justify-center md:justify-start">
+                            <div class="w-12 h-12 bg-[#1a1a2e] rounded-full z-10 relative shadow-md"></div>
+                        </div>
+                        <div class="flex-none md:w-64 text-center md:text-right pt-2">
+                            <h4 class="font-bold text-[#1a1a2e] text-2xl">การออกแบบ & คัดสรร</h4>
+                            <p class="text-lg text-gray-400 mt-2">Month 1-2</p>
+                        </div>
+                        <div class="flex-1 pt-2 text-center md:text-left">
+                            <p class="text-gray-500 font-light leading-relaxed text-xl">
+                                ดีไซเนอร์ร่างแบบโดยเน้นฟังก์ชั่นการใช้งาน และเดินทางไปเลือกผ้าฝ้ายจากแหล่งปลูกที่ไม่ใช้สารเคมี
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="flex flex-col md:flex-row gap-12 md:gap-16 mb-20 relative">
+                         <div class="absolute left-[19px] top-12 bottom-[-80px] w-[3px] bg-gray-300 hidden md:block"></div>
+                        <div class="flex-none flex justify-center md:justify-start">
+                            <div class="w-12 h-12 bg-gray-300 rounded-full z-10 relative"></div>
+                        </div>
+                        <div class="flex-none md:w-64 text-center md:text-right pt-2">
+                            <h4 class="font-bold text-[#1a1a2e] text-2xl">การตัดเย็บ</h4>
+                            <p class="text-lg text-gray-400 mt-2">Month 3</p>
+                        </div>
+                        <div class="flex-1 pt-2 text-center md:text-left">
+                            <p class="text-gray-500 font-light leading-relaxed text-xl">
+                                ช่างฝีมือที่มีประสบการณ์กว่า 20 ปี ทำการตัดเย็บอย่างประณีต ทุกตะเข็บต้องผ่านการตรวจสอบ
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="flex flex-col md:flex-row gap-12 md:gap-16 relative">
+                        <div class="flex-none flex justify-center md:justify-start">
+                            <div class="w-12 h-12 bg-gray-300 rounded-full z-10 relative"></div>
+                        </div>
+                        <div class="flex-none md:w-64 text-center md:text-right pt-2">
+                            <h4 class="font-bold text-[#1a1a2e] text-2xl">ส่งมอบ</h4>
+                            <p class="text-lg text-gray-400 mt-2 uppercase">READY</p>
+                        </div>
+                        <div class="flex-1 pt-2 text-center md:text-left">
+                            <p class="text-gray-500 font-light leading-relaxed text-xl">
+                                สินค้าถูกบรรจุลงในกล่องกระดาษรีไซเคิล พร้อมส่งถึงมือคุณด้วยความใส่ใจ
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================= PAGE 4: CONTACT (Scaled Up) ================= -->
+        <div id="contact" class="page-section">
+            <section class="max-w-[1600px] mx-auto px-8 py-32">
+                <div class="text-center mb-20">
+                    <h2 class="text-4xl font-medium text-[#1a1a2e] mb-6">ติดต่อเรา</h2>
+                    <p class="text-gray-500 font-light max-w-3xl mx-auto text-xl">
+                        เรายินดีรับฟังทุกความคิดเห็น หรือหากคุณต้องการคำแนะนำในการเลือกไซส์ ทีมงานของเราพร้อมดูแลคุณเสมอ
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden flex flex-col md:flex-row max-w-7xl mx-auto mb-32 h-auto md:min-h-[700px] border border-gray-100">
+                    <!-- Left: Info (Original Navy) -->
+                    <div class="bg-[#1a1a2e] text-white p-16 md:w-2/5 flex flex-col justify-center">
+                        <h3 class="text-3xl font-bold mb-12">ข้อมูลติดต่อ</h3>
+                        
+                        <div class="flex items-start gap-6 mb-12">
+                            <i data-lucide="map-pin" class="w-8 h-8 mt-1 text-gray-400"></i>
+                            <div>
+                                <p class="font-medium text-xl">AERIS Studio</p>
+                                <p class="text-base text-gray-300 font-light mt-2 leading-relaxed">123/45 อาคารมินิมอลทาวเวอร์ ชั้น 5<br>ถนนสุขุมวิท, กรุงเทพฯ 10110</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6 mb-12">
+                            <i data-lucide="phone" class="w-8 h-8 text-gray-400"></i>
+                            <p class="text-lg text-gray-300">02-123-4567</p>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <i data-lucide="mail" class="w-8 h-8 text-gray-400"></i>
+                            <p class="text-lg text-gray-300">hello@aeris.co.th</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Form (White) -->
+                    <div class="p-16 md:w-3/5 bg-white flex flex-col justify-center">
+                        <form onsubmit="event.preventDefault(); alert('ขอบคุณสำหรับข้อความ เราจะติดต่อกลับโดยเร็วที่สุด');">
+                            <div class="grid grid-cols-2 gap-8 mb-8">
+                                <div>
+                                    <label class="block text-sm text-gray-500 mb-3">ชื่อ</label>
+                                    <input type="text" class="w-full border-b border-gray-200 py-3 focus:outline-none focus:border-[#1a1a2e] transition text-lg bg-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-500 mb-3">นามสกุล</label>
+                                    <input type="text" class="w-full border-b border-gray-200 py-3 focus:outline-none focus:border-[#1a1a2e] transition text-lg bg-transparent">
+                                </div>
+                            </div>
+                            <div class="mb-8">
+                                <label class="block text-sm text-gray-500 mb-3">อีเมล</label>
+                                <input type="email" class="w-full border-b border-gray-200 py-3 focus:outline-none focus:border-[#1a1a2e] transition text-lg bg-transparent">
+                            </div>
+                            <div class="mb-8">
+                                <label class="block text-sm text-gray-500 mb-3">หัวข้อ</label>
+                                <select class="w-full border-b border-gray-200 py-3 focus:outline-none focus:border-[#1a1a2e] transition text-lg bg-transparent">
+                                    <option>สอบถามทั่วไป</option>
+                                    <option>ติดตามพัสดุ</option>
+                                    <option>แจ้งปัญหาการใช้งาน</option>
+                                </select>
+                            </div>
+                            <div class="mb-10">
+                                <label class="block text-sm text-gray-500 mb-3">ข้อความ</label>
+                                <textarea rows="4" class="w-full border border-gray-200 rounded-lg p-4 focus:outline-none focus:border-[#1a1a2e] transition text-lg resize-none bg-transparent"></textarea>
+                            </div>
+                            <button class="bg-[#1a1a2e] text-white text-base px-10 py-4 rounded-lg hover:bg-opacity-90 transition shadow-lg">ส่งข้อความ</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="max-w-4xl mx-auto">
+                    <h3 class="text-3xl text-center mb-16 text-[#1a1a2e]">คำถามที่พบบ่อย (FAQ)</h3>
+                    
+                    <div class="space-y-6">
+                        <div class="border border-gray-200 rounded-xl p-8 bg-white hover:shadow-md transition">
+                            <h4 class="font-bold text-xl mb-3 text-[#1a1a2e]">ระยะเวลาในการจัดส่งสินค้า?</h4>
+                            <p class="text-base text-gray-500 font-light leading-relaxed">สำหรับการจัดส่งภายในกรุงเทพฯ ใช้เวลา 1-2 วันทำการ และต่างจังหวัด 2-3 วันทำการ เราจัดส่งฟรีเมื่อมียอดสั่งซื้อ 1,500 บาทขึ้นไป</p>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-xl p-8 bg-white hover:shadow-md transition">
+                            <h4 class="font-bold text-xl mb-3 text-[#1a1a2e]">นโยบายการเปลี่ยนคืนสินค้า?</h4>
+                            <p class="text-base text-gray-500 font-light leading-relaxed">หากสินค้าใส่ไม่ได้หรือมีตำหนิ สามารถแจ้งเปลี่ยนได้ภายใน 7 วันหลังจากได้รับสินค้า โดยสินค้าต้องอยู่ในสภาพเดิมและยังไม่ตัดป้าย</p>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-xl p-8 bg-white hover:shadow-md transition">
+                            <h4 class="font-bold text-xl mb-3 text-[#1a1a2e]">มีหน้าร้านให้ลองสินค้าไหม?</h4>
+                            <p class="text-base text-gray-500 font-light leading-relaxed">ปัจจุบันเราจำหน่ายผ่านช่องทางออนไลน์เท่านั้น แต่เรามีตารางไซส์ที่ละเอียดให้คุณวัดขนาดได้แม่นยำ หรือทักแชทเพื่อปรึกษาเราได้ครับ</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================= PAGE 5: CART (Scaled Up & Functional) ================= -->
+        <div id="cart" class="page-section">
+            <section class="max-w-5xl mx-auto px-6 py-32 min-h-[70vh]">
+                <h2 class="text-4xl font-medium text-center text-[#1a1a2e] mb-16">ตะกร้าสินค้า</h2>
+
+                <div id="cart-content" class="bg-white border border-gray-100 rounded-2xl p-12 shadow-sm mb-12">
+                     <!-- Dynamic content will be injected here -->
+                     <div class="text-center text-gray-500 py-10">
+                        <p class="text-xl">ยังไม่มีสินค้าในตะกร้า</p>
+                        <button onclick="showPage('products')" class="mt-6 text-[#1a1a2e] underline hover:text-gray-800">เลือกซื้อสินค้า</button>
+                     </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- FOOTER (Reverted to Original) -->
+    <footer class="bg-[#1a1a2e] text-white py-12 text-center mt-auto">
+        <p class="text-xs text-gray-400 mb-2">© 2025 AERIS Minimalist Apparel. สงวนลิขสิทธิ์</p>
+        <p class="text-[10px] text-gray-600">"ความเรียบง่ายคือความสง่างามที่แท้จริง"</p>
+    </footer>
+
+    <!-- Toast Notification Element -->
+    <div id="toast">เพิ่มสินค้าลงตะกร้าแล้ว</div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- Data ---
+        const products = [
+            { id: 1, name: "เสื้อยืด Basic Tee (ขาว)", price: 890, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=300" },
+            { id: 2, name: "เสื้อเชิ้ต Oxford คอตั้ง", price: 1590, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=300" },
+            { id: 3, name: "กางเกง Chino ทรงตรง", price: 1290, image: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&q=80&w=300" },
+            { id: 4, name: "กระเป๋าผ้า Canvas สีดำ", price: 690, image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=300" },
+            { id: 5, name: "เดรสลินินทรงปล่อย", price: 890, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=300" },
+            { id: 6, name: "เสื้อคลุม Cardigan", price: 890, image: "https://images.unsplash.com/photo-1620799140408-ed5341cd2431?auto=format&fit=crop&q=80&w=300" },
+            { id: 7, name: "หมวกแก๊ป Minimal", price: 890, image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=300" },
+            { id: 8, name: "กางเกงขาสั้น Easy Day", price: 890, image: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&q=80&w=300" }
+        ];
+
+        let cart = [];
+
+        // --- Logic ---
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            updateCartBadge();
+            showToast(`เพิ่ม "${product.name}" ลงตะกร้าแล้ว`);
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCartBadge();
+            renderCartPage(); // Re-render to show updated list
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (totalItems > 0) {
+                badge.innerText = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderCartPage() {
+            const container = document.getElementById('cart-content');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-20">
+                        <i data-lucide="shopping-bag" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                        <p class="text-2xl font-light">ยังไม่มีสินค้าในตะกร้า</p>
+                        <button onclick="showPage('products')" class="mt-8 bg-[#1a1a2e] text-white px-8 py-3 rounded-lg hover:bg-opacity-90 transition">เลือกซื้อสินค้า</button>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                html += `
+                    <div class="flex flex-col md:flex-row items-center gap-10 pb-10 border-b border-gray-100 mb-8 last:border-0 last:mb-0">
+                        <div class="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 text-center md:text-left">
+                            <h3 class="font-bold text-2xl text-[#1a1a2e] mb-2">${item.name}</h3>
+                            <p class="text-gray-500 text-lg">${item.price.toLocaleString()} บาท</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="border border-gray-200 rounded px-4 py-2 text-base text-gray-600">จำนวน : ${item.quantity}</div>
+                        </div>
+                        <div class="text-right min-w-[100px]">
+                             <p class="font-bold text-2xl text-[#1a1a2e]">${itemTotal.toLocaleString()}</p>
+                             <button onclick="removeFromCart(${item.id})" class="text-sm text-red-500 underline hover:text-red-700 mt-2">ลบสินค้า</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const summaryHtml = `
+                <div class="mt-12 flex flex-col md:flex-row justify-between items-end border-t border-gray-100 pt-10">
+                    <button onclick="showPage('products')" class="flex items-center text-gray-500 hover:text-black transition text-lg mb-8 md:mb-0">
+                        <i data-lucide="arrow-left" class="w-5 h-5 mr-3"></i> ซื้อสินค้าต่อ
+                    </button>
+                    
+                    <div class="w-full md:w-1/3 space-y-5">
+                        <div class="flex justify-between text-lg text-gray-600">
+                            <span>ค่าจัดส่ง:</span>
+                            <span>ฟรี</span>
+                        </div>
+                        <div class="flex justify-between text-3xl font-bold text-[#1a1a2e]">
+                            <span>ยอดรวมสุทธิ</span>
+                            <span>${total.toLocaleString()} บาท</span>
+                        </div>
+                        <button onclick="checkout()" class="w-full bg-[#1a1a2e] text-white text-lg py-4 rounded-xl hover:bg-opacity-90 mt-4 shadow-lg active:scale-95 transition">ชำระเงิน</button>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html + summaryHtml;
+            lucide.createIcons();
+        }
+
+        function checkout() {
+            if (cart.length === 0) return;
+            alert(`ขอบคุณสำหรับการสั่งซื้อ!\nยอดรวมทั้งหมด: ${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()} บาท\nเราจะทำการจัดส่งให้เร็วที่สุด`);
+            cart = [];
+            updateCartBadge();
+            renderCartPage();
+            showPage('home');
+        }
+
+        // --- Toast Function ---
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- Navigation ---
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected page
+            const target = document.getElementById(pageId);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo(0, 0);
+            }
+
+            // If cart page, render content
+            if (pageId === 'cart') {
+                renderCartPage();
+            }
+
+            // Update Navigation Active State
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            const activeLink = document.getElementById('nav-' + pageId);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
